@@ -1,4 +1,9 @@
 fastapi
 uvicorn[standard]
+
+# LangChain v0.2 系 + OpenAI ラッパー
 langchain
-openai
+langchain-community   # ← 追加
+langchain-openai      # ← 追加
+
+openai                # OpenAI SDK 本体
