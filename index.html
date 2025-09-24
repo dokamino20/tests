@@ -1,11 +1,514 @@
-<!-- index.html -->
-<script>
-  /* 中略 … */
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seaside Retreat - 癒やしの週末リトリート</title>
+  <style>
+    :root {
+      --accent: #0c7fb0;
+      --accent-dark: #07506e;
+      --bg: #f4f9fc;
+      --text: #1e2a32;
+      --muted: #5c6f7a;
+    }
 
-  const resp = await fetch("https://tests-ux33.onrender.com", {
-      method:"POST",
-      /* … */
-  });
+    * {
+      box-sizing: border-box;
+    }
 
-  /* … */
-</script>
+    body {
+      margin: 0;
+      font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      scroll-behavior: smooth;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 2px 10px rgba(12, 127, 176, 0.15);
+      backdrop-filter: blur(10px);
+    }
+
+    .nav {
+      max-width: 1080px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.8rem 1.5rem;
+    }
+
+    .logo {
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+
+    nav ul {
+      display: flex;
+      gap: 1rem;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    nav a {
+      color: var(--muted);
+      text-decoration: none;
+      padding: 0.3rem 0.7rem;
+      border-radius: 999px;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    nav a:hover,
+    nav a:focus {
+      background: rgba(12, 127, 176, 0.12);
+      color: var(--accent);
+      outline: none;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    main {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 1.5rem 5rem;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      padding: 6rem 0 4rem;
+      align-items: center;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.4rem, 4vw, 3.4rem);
+      margin: 0 0 1rem;
+    }
+
+    .hero p.lead {
+      font-size: 1.15rem;
+      color: var(--muted);
+    }
+
+    .hero-card {
+      background: linear-gradient(135deg, rgba(12, 127, 176, 0.85), rgba(7, 80, 110, 0.85)),
+        url("https://images.unsplash.com/photo-1493558103817-58b2924bce98?auto=format&fit=crop&w=1350&q=80") center/cover;
+      color: #fff;
+      padding: 2.5rem;
+      border-radius: 24px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 45px rgba(12, 127, 176, 0.25);
+    }
+
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      inset: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 20px;
+      opacity: 0.6;
+    }
+
+    .hero-card p {
+      margin: 0;
+      font-size: 0.95rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.7rem 1.4rem;
+      margin-top: 1.5rem;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      box-shadow: 0 10px 25px rgba(12, 127, 176, 0.25);
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 30px rgba(12, 127, 176, 0.35);
+    }
+
+    section {
+      margin: 4rem 0;
+    }
+
+    .section-title {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .section-subtitle {
+      color: var(--muted);
+      margin-bottom: 2rem;
+    }
+
+    .highlights {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.8rem;
+    }
+
+    .highlight-card {
+      background: #fff;
+      border-radius: 18px;
+      padding: 1.8rem;
+      box-shadow: 0 12px 30px rgba(15, 59, 84, 0.08);
+      border: 1px solid rgba(12, 127, 176, 0.08);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .highlight-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 18px 36px rgba(12, 127, 176, 0.12);
+    }
+
+    .highlight-card h3 {
+      margin-top: 0;
+      margin-bottom: 0.7rem;
+    }
+
+    .program {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 2rem;
+      align-items: start;
+    }
+
+    .program-day {
+      background: #fff;
+      border-left: 6px solid var(--accent);
+      border-radius: 16px;
+      padding: 1.6rem 1.8rem;
+      box-shadow: 0 12px 30px rgba(15, 59, 84, 0.08);
+    }
+
+    .program-day h3 {
+      margin-top: 0;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.2rem;
+    }
+
+    .gallery figure {
+      margin: 0;
+      background: #fff;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 12px 24px rgba(15, 59, 84, 0.08);
+    }
+
+    .gallery img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.3s ease;
+    }
+
+    .gallery figure:hover img {
+      transform: scale(1.05);
+    }
+
+    .testimonial {
+      background: linear-gradient(135deg, rgba(7, 80, 110, 0.95), rgba(12, 127, 176, 0.9));
+      color: #fff;
+      border-radius: 24px;
+      padding: 2.5rem;
+      box-shadow: 0 15px 35px rgba(7, 80, 110, 0.35);
+      display: grid;
+      gap: 1.5rem;
+      grid-template-columns: minmax(0, 1fr) minmax(200px, 280px);
+      align-items: center;
+    }
+
+    .testimonial blockquote {
+      margin: 0;
+      font-size: 1.1rem;
+      line-height: 1.8;
+    }
+
+    .testimonial cite {
+      display: block;
+      margin-top: 1rem;
+      font-style: normal;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    .testimonial img {
+      width: 100%;
+      border-radius: 20px;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+    }
+
+    .cta {
+      text-align: center;
+      padding: 4rem 2rem;
+      background: #fff;
+      border-radius: 28px;
+      box-shadow: 0 18px 45px rgba(15, 59, 84, 0.12);
+    }
+
+    .cta h2 {
+      font-size: clamp(2rem, 4vw, 2.6rem);
+      margin-bottom: 1rem;
+    }
+
+    footer {
+      margin-top: 5rem;
+      background: #0b1a23;
+      color: #dbe5eb;
+      padding: 2.5rem 1.5rem;
+    }
+
+    footer .footer-grid {
+      max-width: 1080px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 2rem;
+      align-items: start;
+    }
+
+    footer a {
+      color: #9fd3ec;
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    .footer-copy {
+      text-align: center;
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      color: #7e94a3;
+    }
+
+    @media (max-width: 720px) {
+      nav ul {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .testimonial {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+
+      .testimonial img {
+        max-width: 260px;
+        margin: 0 auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav">
+      <div class="logo">Seaside Retreat</div>
+      <nav aria-label="メインナビゲーション">
+        <ul>
+          <li><a href="#about">概要</a></li>
+          <li><a href="#program">プログラム</a></li>
+          <li><a href="#gallery">ギャラリー</a></li>
+          <li><a href="#reserve">予約</a></li>
+          <li><a href="#contact">アクセス</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" id="about">
+      <div>
+        <h1>波音に包まれる、心と体のリセット旅</h1>
+        <p class="lead">
+          都会の喧騒から離れ、海辺のヴィラで深い呼吸を取り戻す週末リトリート。
+          ヨガ、瞑想、地元食材を使った食体験が、あなたのウェルビーイングを優しく整えます。
+        </p>
+        <a class="btn" href="#reserve">空き状況を確認する</a>
+      </div>
+      <div class="hero-card" role="presentation">
+        <p>
+          朝日が差し込むオーシャンビューのスタジオで、国際資格を持つ講師によるヨガセッション。
+          夜は焚き火を囲みながら星空瞑想とアロマセラピー。五感を満たす2泊3日の特別な時間です。
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="section-title">Seaside Retreatが選ばれる理由</h2>
+      <p class="section-subtitle">心をときほぐす3つのハイライト</p>
+      <div class="highlights">
+        <article class="highlight-card">
+          <h3>海と森を臨むロケーション</h3>
+          <p>湘南のプライベートビーチに面したヴィラで、1日を通して変化する海の表情を楽しめます。夜は森から吹き抜ける潮風が心地よい眠りへ誘います。</p>
+        </article>
+        <article class="highlight-card">
+          <h3>ウェルネスの専門家が伴走</h3>
+          <p>ヨガ講師、アーユルヴェーダセラピスト、管理栄養士がチームでサポート。ライフスタイルヒアリングをもとに、滞在プログラムをカスタマイズします。</p>
+        </article>
+        <article class="highlight-card">
+          <h3>地産地消の美食メニュー</h3>
+          <p>旬の無農薬野菜と相模湾で獲れた魚介を使い、心身を整えるフードペアリングをご提供。グルテンフリー・ヴィーガンにも対応可能です。</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="program">
+      <h2 class="section-title">2泊3日のモデルスケジュール</h2>
+      <p class="section-subtitle">自然のリズムに寄り添いながら過ごす、至福の72時間</p>
+      <div class="program">
+        <article class="program-day">
+          <h3>DAY 1｜到着と浄化</h3>
+          <ul>
+            <li>14:00 チェックインとウェルカムスムージー</li>
+            <li>16:00 サンセットビーチヨガ</li>
+            <li>19:00 海の幸を味わうオーガニックディナー</li>
+            <li>21:30 キャンドル瞑想とジャーナリング</li>
+          </ul>
+        </article>
+        <article class="program-day">
+          <h3>DAY 2｜内側と向き合う</h3>
+          <ul>
+            <li>06:30 朝日を浴びるフローヨガ</li>
+            <li>09:00 ローカル野菜のブランチ</li>
+            <li>13:00 サウンドバス＆アートセラピー</li>
+            <li>20:00 星を見上げるサイレントリトリート</li>
+          </ul>
+        </article>
+        <article class="program-day">
+          <h3>DAY 3｜再出発の準備</h3>
+          <ul>
+            <li>07:00 森の中のウォーキングメディテーション</li>
+            <li>10:00 パーソナルウェルネスセッション</li>
+            <li>12:00 ローカルフードピクニック</li>
+            <li>14:00 クローズサークルとチェックアウト</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section id="gallery">
+      <h2 class="section-title">滞在のワンシーン</h2>
+      <p class="section-subtitle">写真に触れるだけで潮風を感じるようなギャラリー</p>
+      <div class="gallery">
+        <figure>
+          <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80" alt="夕暮れの海辺でヨガをする参加者">
+        </figure>
+        <figure>
+          <img src="https://images.unsplash.com/photo-1515165562835-c4c6d0d1ff4e?auto=format&fit=crop&w=800&q=80" alt="自然に囲まれたヴィラの外観">
+        </figure>
+        <figure>
+          <img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=800&q=80" alt="緑に囲まれたハンモックでくつろぐ様子">
+        </figure>
+        <figure>
+          <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80" alt="地産食材を使用した鮮やかな食事">
+        </figure>
+      </div>
+    </section>
+
+    <section class="testimonial">
+      <blockquote>
+        「ここに来てから、時間の流れがゆっくりと変わったのを感じました。海の音を聞きながら呼吸を整えるうちに、ずっと抱えていた重さがすっと消えていくようでした。"また日常に戻っても大丈夫"と思える力をもらえた気がします。」
+        <cite>— 会社員 / 32歳</cite>
+      </blockquote>
+      <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=800&q=80" alt="夜のビーチで焚き火を囲む参加者">
+    </section>
+
+    <section class="cta" id="reserve">
+      <h2>次の週末を、自分のためのご褒美に。</h2>
+      <p>毎月第2・第4週末に開催。最大8名の少人数制で、おひとり様での参加も大歓迎です。フォームからお気軽にお問い合わせください。</p>
+      <a class="btn" href="mailto:hello@seasideretreat.jp">予約・問い合わせをする</a>
+    </section>
+
+    <section id="contact">
+      <h2 class="section-title">アクセス</h2>
+      <p class="section-subtitle">新宿から特急で約60分。最寄り駅からは専用シャトルがございます。</p>
+      <div class="program">
+        <div class="program-day">
+          <h3>所在地</h3>
+          <p>〒251-0035 神奈川県藤沢市片瀬海岸1-2-3 Seaside Villa</p>
+          <p>江ノ島電鉄「江ノ島」駅より徒歩5分</p>
+        </div>
+        <div class="program-day">
+          <h3>お問い合わせ</h3>
+          <ul>
+            <li>メール: hello@seasideretreat.jp</li>
+            <li>電話: 0466-00-1234（10:00〜18:00）</li>
+            <li>Instagram: <a href="https://instagram.com" target="_blank" rel="noreferrer">@seasideretreat</a></li>
+          </ul>
+        </div>
+        <div class="program-day">
+          <h3>注意事項</h3>
+          <ul>
+            <li>18歳未満の方は保護者の同伴が必要です。</li>
+            <li>ヨガマットはご用意しておりますが、お気に入りのものがあればお持ち込みいただけます。</li>
+            <li>アレルギーや食事制限のある方は事前にお知らせください。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-grid">
+      <div>
+        <h3>Seaside Retreatについて</h3>
+        <p>マインドフルな暮らしを提案するウェルネススタジオ。リトリートのほか、オンラインレッスンや企業向けウェルビーイング研修も行っています。</p>
+      </div>
+      <div>
+        <h3>その他のプログラム</h3>
+        <ul>
+          <li><a href="#">サンライズビーチヨガ</a></li>
+          <li><a href="#">マインドフルワークショップ</a></li>
+          <li><a href="#">クリエイティブリトリート</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>ニュースレター</h3>
+        <p>季節のリトリート情報やセルフケアのヒントをお届けします。</p>
+        <form>
+          <label for="email" class="sr-only">メールアドレス</label>
+          <input id="email" type="email" name="email" placeholder="name@example.com" required style="width: 100%; padding: 0.6rem 0.8rem; border-radius: 999px; border: none; margin-bottom: 0.7rem;">
+          <button type="submit" class="btn" style="width: 100%; justify-content: center;">購読する</button>
+        </form>
+      </div>
+    </div>
+    <div class="footer-copy">© 2024 Seaside Retreat. All rights reserved.</div>
+  </footer>
+</body>
+</html>
