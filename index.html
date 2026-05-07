@@ -1,11 +1,276 @@
-<!-- index.html -->
-<script>
-  /* 中略 … */
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>動画投稿シミュレーター</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+      background: #f5f5f5;
+      color: #222;
+    }
+    main {
+      width: min(900px, calc(100% - 24px));
+      margin: 24px auto;
+    }
+    h1 { margin: 0 0 16px; font-size: 28px; }
+    h2 { margin: 0 0 12px; font-size: 20px; }
+    section {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    label { display: block; font-weight: 700; }
+    input, textarea, button {
+      width: 100%;
+      margin-top: 6px;
+      padding: 10px;
+      border: 1px solid #bbb;
+      border-radius: 8px;
+      font: inherit;
+    }
+    textarea { min-height: 90px; resize: vertical; }
+    button {
+      border: 0;
+      background: #222;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button:disabled { opacity: .6; cursor: wait; }
+    .stats, .meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .pill {
+      display: inline-block;
+      padding: 6px 10px;
+      background: #eee;
+      border-radius: 999px;
+      font-size: 14px;
+    }
+    .video {
+      border-top: 1px solid #ddd;
+      padding-top: 16px;
+      margin-top: 16px;
+    }
+    .video:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
+    .comment {
+      margin-top: 10px;
+      padding: 10px;
+      background: #fafafa;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+    }
+    .comment strong { display: block; margin-bottom: 4px; }
+    .note { color: #666; font-size: 14px; line-height: 1.6; }
+    .empty { color: #777; text-align: center; padding: 24px 0; }
+    @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>動画投稿シミュレーター</h1>
 
-  const resp = await fetch("https://tests-ux33.onrender.com", {
-      method:"POST",
-      /* … */
-  });
+    <section>
+      <h2>チャンネル設定</h2>
+      <div class="grid">
+        <label>登録者数
+          <input id="subscribers" type="number" min="0" value="1000" />
+        </label>
+        <label>合計視聴回数
+          <input id="totalViews" type="number" min="0" value="10000" />
+        </label>
+      </div>
+      <p class="note">HTMLファイルだけで動きます。AI APIキーを入れない場合は、デモコメントを自動生成します。</p>
+    </section>
 
-  /* … */
-</script>
+    <section>
+      <h2>動画を追加</h2>
+      <div class="grid">
+        <label>タイトル
+          <input id="title" maxlength="120" placeholder="例：初めての動画投稿" />
+        </label>
+        <label>OpenAI APIキー（任意）
+          <input id="apiKey" type="password" autocomplete="off" placeholder="sk-...（ブラウザには保存しません）" />
+        </label>
+      </div>
+      <label>内容
+        <textarea id="content" maxlength="1500" placeholder="動画の内容を書いてください"></textarea>
+      </label>
+      <button id="addVideo">動画を追加</button>
+      <p id="status" class="note" role="status"></p>
+    </section>
+
+    <section>
+      <h2>チャンネル</h2>
+      <div class="stats">
+        <span class="pill">登録者: <b id="showSubscribers">1,000</b></span>
+        <span class="pill">合計視聴回数: <b id="showTotalViews">10,000</b></span>
+        <span class="pill">動画数: <b id="showVideoCount">0</b></span>
+      </div>
+      <div id="videos" class="empty">まだ動画がありません。</div>
+    </section>
+  </main>
+
+  <script>
+    const videos = [];
+    const formatter = new Intl.NumberFormat("ja-JP");
+    const $ = (selector) => document.querySelector(selector);
+
+    function getNumber(selector) {
+      return Math.max(0, Number($(selector).value || 0));
+    }
+
+    function estimateViews(subscribers, totalViews) {
+      const subscriberViews = subscribers * (0.05 + Math.random() * 0.35);
+      const historyViews = Math.min(totalViews * 0.02, 50000);
+      return Math.max(1, Math.round(100 + subscriberViews + Math.random() * historyViews));
+    }
+
+    function makeDemoComments(title, content, views) {
+      const samples = [
+        `「${title}」めっちゃ気になる！`,
+        "説明がシンプルで見やすい動画になりそう。",
+        "次は裏側や失敗したところも見たいです。",
+        "初見です。チャンネル登録しました！",
+        "ここから伸びそう。続編待ってます。",
+        `内容の「${content.slice(0, 18)}」の部分をもっと詳しく知りたい。`,
+        "サムネと冒頭3秒を強くしたらもっと伸びそう。",
+        "コメント欄までちゃんとシミュレーションできるの面白い。"
+      ];
+      return samples.slice(0, 6).map((text, index) => ({
+        author: `視聴者${Math.floor(1000 + Math.random() * 9000)}`,
+        text,
+        likes: Math.floor(Math.random() * Math.max(10, views / 30)),
+        minutesAgo: (index + 1) * Math.floor(3 + Math.random() * 20)
+      }));
+    }
+
+    async function makeAiComments({ apiKey, title, content, subscribers, totalViews, views }) {
+      const prompt = `動画投稿サイトの日本語コメントを6件作ってください。JSONだけで返してください。形式は {"comments":[{"author":"名前","text":"コメント","likes":数字,"minutesAgo":数字}]} です。\n登録者数:${subscribers}\n合計視聴回数:${totalViews}\n今回の視聴回数:${views}\nタイトル:${title}\n内容:${content}`;
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          temperature: 0.9,
+          response_format: { type: "json_object" },
+          messages: [
+            { role: "system", content: "安全で自然な動画コメントをJSONだけで生成してください。" },
+            { role: "user", content: prompt }
+          ]
+        })
+      });
+      if (!response.ok) throw new Error("AI APIでコメントを作れませんでした。デモコメントを使います。");
+      const data = await response.json();
+      const parsed = JSON.parse(data.choices[0].message.content || "{}");
+      return Array.isArray(parsed.comments) ? parsed.comments.slice(0, 6) : [];
+    }
+
+    function updateStats() {
+      const postedViews = videos.reduce((sum, video) => sum + video.views, 0);
+      $("#showSubscribers").textContent = formatter.format(getNumber("#subscribers"));
+      $("#showTotalViews").textContent = formatter.format(getNumber("#totalViews") + postedViews);
+      $("#showVideoCount").textContent = formatter.format(videos.length);
+    }
+
+    function renderVideos() {
+      updateStats();
+      if (videos.length === 0) {
+        $("#videos").className = "empty";
+        $("#videos").textContent = "まだ動画がありません。";
+        return;
+      }
+      $("#videos").className = "";
+      $("#videos").innerHTML = videos.map((video) => `
+        <article class="video">
+          <h3>${escapeHtml(video.title)}</h3>
+          <p>${escapeHtml(video.content)}</p>
+          <div class="meta">
+            <span class="pill">${formatter.format(video.views)} 回視聴</span>
+            <span class="pill">${video.source}</span>
+          </div>
+          <h4>コメント</h4>
+          ${video.comments.map((comment) => `
+            <div class="comment">
+              <strong>${escapeHtml(comment.author || "視聴者")}</strong>
+              <div>${escapeHtml(comment.text || "")}</div>
+              <small>${formatter.format(Number(comment.likes || 0))} likes・${formatter.format(Number(comment.minutesAgo || 1))}分前</small>
+            </div>
+          `).join("")}
+        </article>
+      `).join("");
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>'"]/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "'": "&#39;",
+        '"': "&quot;"
+      }[char]));
+    }
+
+    async function addVideo() {
+      const title = $("#title").value.trim();
+      const content = $("#content").value.trim();
+      const subscribers = getNumber("#subscribers");
+      const totalViews = getNumber("#totalViews");
+      const apiKey = $("#apiKey").value.trim();
+      if (!title || !content) {
+        $("#status").textContent = "タイトルと内容を入力してください。";
+        return;
+      }
+
+      $("#addVideo").disabled = true;
+      $("#status").textContent = apiKey ? "AI APIでコメント生成中..." : "デモコメント生成中...";
+      const views = estimateViews(subscribers, totalViews);
+      let comments = [];
+      let source = "デモコメント";
+      let message = "投稿しました。";
+
+      if (apiKey) {
+        try {
+          comments = await makeAiComments({ apiKey, title, content, subscribers, totalViews, views });
+          source = "AI APIコメント";
+        } catch (error) {
+          comments = makeDemoComments(title, content, views);
+          source = "デモコメント";
+          message = error.message;
+        }
+      } else {
+        comments = makeDemoComments(title, content, views);
+      }
+
+      if (comments.length === 0) comments = makeDemoComments(title, content, views);
+      videos.unshift({ title, content, views, comments, source });
+      $("#title").value = "";
+      $("#content").value = "";
+      $("#status").textContent = message;
+      renderVideos();
+      $("#addVideo").disabled = false;
+    }
+
+    $("#addVideo").addEventListener("click", addVideo);
+    $("#subscribers").addEventListener("input", updateStats);
+    $("#totalViews").addEventListener("input", updateStats);
+    updateStats();
+  </script>
+</body>
+</html>
